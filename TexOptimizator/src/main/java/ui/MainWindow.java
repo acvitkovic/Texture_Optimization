@@ -214,8 +214,8 @@ public class MainWindow extends JFrame {
 				if (cameraDistance <= 5) {
 					// Linear downscaling, fast
 					for (int i = 0; i <= cameraDistance; i++) {
-						newImageResolutionX = (int) (newImageResolutionX / 1.25);
-						newImageResolutionY = (int) (newImageResolutionY / 1.25);
+						newImageResolutionX = (int) (newImageResolutionX / 1.26);
+						newImageResolutionY = (int) (newImageResolutionY / 1.26);
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
@@ -223,23 +223,23 @@ public class MainWindow extends JFrame {
 				}
 				if (cameraDistance > 5 && cameraDistance <= 20) {
 					// Linear downscaling, slow
-					for (int i = -1; i <= cameraDistance; i++) {
-						newImageResolutionX = (int) (newImageResolutionX / 1.2);
-						newImageResolutionY = (int) (newImageResolutionY / 1.2);
+					for (int i = 0; i <= cameraDistance; i++) {
+						newImageResolutionX = (int) (newImageResolutionX / 1.22);
+						newImageResolutionY = (int) (newImageResolutionY / 1.22);
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
 				}
 				if (cameraDistance > 20) {
 					// Linear downscaling, the slowest
-					for (int i = -7; i <= cameraDistance; i++) {
-						newImageResolutionX = (int) (newImageResolutionX / 1.1);
-						newImageResolutionY = (int) (newImageResolutionY / 1.1);
+					for (int i = 0; i <= cameraDistance; i++) {
+						newImageResolutionX = (int) (newImageResolutionX / 1.12);
+						newImageResolutionY = (int) (newImageResolutionY / 1.12);
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
 					if (cameraDistance > 35) {
-						for (int i = -7; i < cameraDistance; i++) {
+						for (int i = 0; i < cameraDistance; i++) {
 							newImageResolutionX = (int) (newImageResolutionX / 1.04);
 							newImageResolutionX += 6;
 							newImageResolutionY = (int) (newImageResolutionY / 1.04);
@@ -259,15 +259,9 @@ public class MainWindow extends JFrame {
 					// System.out.println(newImageResolutionY);
 				}
 
-				// The +1 helps resolve texture sizes for singular flat planes and objects
-				// For models smaller than 1m squared
-				if (surfaceArea > 1) {
-					newImageResolutionX = (int) (newImageResolutionX * (surfaceArea));
-					newImageResolutionY = (int) (newImageResolutionY * (surfaceArea));
-				} else {
+					// Fixes scaling issues below 1, the rest of the code suits this
 					newImageResolutionX = (int) (newImageResolutionX * (surfaceArea + 1));
 					newImageResolutionY = (int) (newImageResolutionY * (surfaceArea + 1));
-				}
 
 				// System.out.println(newImageResolutionX);
 				// System.out.println(newImageResolutionY);
@@ -581,13 +575,13 @@ public class MainWindow extends JFrame {
 		if (selectedButton != null) {
 			selectedButton.setBackground(Color.YELLOW);
 			if (selectedButton.getText().contains("1st Person")) {
-				cameraDistance = 4;
+				cameraDistance = 3;
 				optionString = "1st Person";
 				optionsButton.setText("Camera Option: " + optionString);
 
 			}
 			if (selectedButton.getText().contains("3rd Person")) {
-				cameraDistance = 8;
+				cameraDistance = 5;
 				optionString = "3rd Person";
 				optionsButton.setText("Camera Option: " + optionString);
 			}
