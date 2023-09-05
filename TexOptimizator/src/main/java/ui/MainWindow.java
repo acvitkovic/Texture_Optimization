@@ -1,6 +1,11 @@
 package main.java.ui;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.FileImageOutputStream;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicButtonUI;
@@ -209,7 +214,6 @@ public class MainWindow extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				newImageResolutionX = 4096;
 				newImageResolutionY = 4096;
-				
 
 				if (cameraDistance <= 5) {
 					// Linear downscaling, fast
@@ -219,7 +223,6 @@ public class MainWindow extends JFrame {
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
-
 				}
 				if (cameraDistance > 5 && cameraDistance <= 20) {
 					// Linear downscaling, slow
@@ -240,15 +243,17 @@ public class MainWindow extends JFrame {
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
-					if (cameraDistance > 35) {
-						for (int i = 0; i < cameraDistance + 26; i++) {
-							newImageResolutionX = (int) (newImageResolutionX / 1.05);
-							newImageResolutionX += 5;
-							newImageResolutionY = (int) (newImageResolutionY / 1.05);
-							newImageResolutionY += 5;
-						}
+				}
+
+				if (cameraDistance > 35) {
+					for (int i = 0; i < cameraDistance + 26; i++) {
+						newImageResolutionX = (int) (newImageResolutionX / 1.05);
+						newImageResolutionX += 5;
+						newImageResolutionY = (int) (newImageResolutionY / 1.05);
+						newImageResolutionY += 5;
 					}
 				}
+
 				if (newImageResolutionX < 32 || newImageResolutionY < 32) {
 					// Increment by one in case the previous divisions lower the number to 0
 					newImageResolutionX += 1;
@@ -257,16 +262,12 @@ public class MainWindow extends JFrame {
 						newImageResolutionX *= 2;
 						newImageResolutionY *= 2;
 					}
-					// System.out.println(newImageResolutionX);
-					// System.out.println(newImageResolutionY);
 				}
 
-					// Fixes scaling issues below 1, the rest of the code suits this
-					newImageResolutionX = (int) (newImageResolutionX * (surfaceArea + 1));
-					newImageResolutionY = (int) (newImageResolutionY * (surfaceArea + 1));
+				// Fixes scaling issues below 1, the rest of the code suits this
+				newImageResolutionX = (int) (newImageResolutionX * (surfaceArea + 1));
+				newImageResolutionY = (int) (newImageResolutionY * (surfaceArea + 1));
 
-				// System.out.println(newImageResolutionX);
-				// System.out.println(newImageResolutionY);
 
 				// Only check of 1 variable is enough as we scale both of them equally.
 				if (newImageResolutionX > 4096) {
@@ -279,8 +280,6 @@ public class MainWindow extends JFrame {
 				}
 
 				export2DButton.setEnabled(true);
-				
-				
 
 				optimize2DButton
 						.setText("<html>New Resolution: <br>" + newImageResolutionX + " x " + newImageResolutionY);
@@ -295,10 +294,11 @@ public class MainWindow extends JFrame {
 
 				// Show a file chooser dialog for exporting the image
 				JFileChooser fileChooser = new JFileChooser();
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Images", "png"); // Change filter to
-																									// PNG
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Images", "png", "jpg"); // PNG option
+				FileNameExtensionFilter jpgFilter = new FileNameExtensionFilter("JPG Images", "jpg", "jpeg"); // JPG option
 				fileChooser.setFileFilter(filter);
-
+				fileChooser.addChoosableFileFilter(jpgFilter);
+				
 				// Set the initial directory to the last saved location, if available
 				String lastSavedDirectory = System.getProperty("user.home"); // Default to user's home directory
 				Preferences prefs = Preferences.userRoot().node(getClass().getName());
@@ -316,22 +316,46 @@ public class MainWindow extends JFrame {
 					File selectedFile = fileChooser.getSelectedFile();
 					String filePath = selectedFile.getAbsolutePath();
 
+					FileNameExtensionFilter selectedFilter = (FileNameExtensionFilter) fileChooser.getFileFilter();
+					String fileExtension = selectedFilter.getExtensions()[0];
 					// Check if the file name already has the .png extension
-					if (!filePath.toLowerCase().endsWith(".png")) {
-						filePath += ".png"; // Append the .png extension
+					if (!filePath.toLowerCase().endsWith("." + fileExtension) ) {
+						filePath += "." + fileExtension; // Append the .png extension
 					}
 
 					// Export the scaled image as a PNG file
-					try {
-						ImageIO.write(scaledImage, "png", new File(filePath)); // Change format to "png"
-						JOptionPane.showMessageDialog(null, "Image exported successfully.", "Success",
-								JOptionPane.INFORMATION_MESSAGE);
+		            try {
+		                // Append the selected file extension if not already present in the file name
+		                String filePath1 = selectedFile.getAbsolutePath();
+		                if (!filePath1.toLowerCase().endsWith("." + fileExtension)) {
+		                    filePath1 += "." + fileExtension;
+		                }
 
-						// Save the last directory location
-						prefs.put("lastDirectory", selectedFile.getParent());
-					} catch (Exception ex) {
-						JOptionPane.showMessageDialog(null, "Error exporting image: " + ex.getMessage(), "Error",
-								JOptionPane.ERROR_MESSAGE);
+		                // Export the image based on the selected format
+		                if (fileExtension.equals("png")) {
+		                    // Export as PNG
+		                    ImageIO.write(scaledImage, "png", new File(filePath1));
+		                } else if (fileExtension.equals("jpg")) {
+		                    // Export as JPG with compression
+		                    ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
+		                    ImageWriteParam writeParam = new JPEGImageWriteParam(null);
+		                    writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		                    writeParam.setCompressionQuality(0.7f); // Adjust the quality (0.0 - 1.0)
+
+		                    FileImageOutputStream output = new FileImageOutputStream(new File(filePath1));
+		                    writer.setOutput(output);
+		                    writer.write(null, new IIOImage(scaledImage, null, null), writeParam);
+		                    output.close();
+		                }
+
+		                JOptionPane.showMessageDialog(null, "Image exported successfully.", "Success",
+		                        JOptionPane.INFORMATION_MESSAGE);
+
+		                // Save the last directory location
+		                prefs.put("lastDirectory", selectedFile.getParent());
+		            } catch (IOException ex) {
+		                JOptionPane.showMessageDialog(null, "Error exporting image: " + ex.getMessage(), "Error",
+		                        JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -598,19 +622,17 @@ public class MainWindow extends JFrame {
 				optionsButton.setText("Camera Option: " + optionString);
 			}
 			if (selectedButton.getText().contains("Custom")) {
-					cameraDistance = CameraDistanceInput.getCameraDistance(cameraDistance);
-				
+				cameraDistance = CameraDistanceInput.getCameraDistance(cameraDistance);
+
 				optionString = "Custom Camera Distance";
-					optionsButton.setText("Camera Option: " + optionString + " (" + cameraDistance + " meters)");
-				}
-			}
-			// Check to enable the Optimize Texture button
-			if (selectedImageFile != null && objFileContent != null && cameraDistance != 0) {
-				optimize2DButton.setEnabled(true);
+				optionsButton.setText("Camera Option: " + optionString + " (" + cameraDistance + " meters)");
 			}
 		}
-
-
+		// Check to enable the Optimize Texture button
+		if (selectedImageFile != null && objFileContent != null && cameraDistance != 0) {
+			optimize2DButton.setEnabled(true);
+		}
+	}
 
 	public JButton getSelectedButton() {
 		return selectedButton;
