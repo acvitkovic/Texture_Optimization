@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,8 +44,8 @@ public class MainWindow extends JFrame {
 
 	public static int startLinearDistance = 5;
 	public static float exponentialFactor = 0.1f;
-	public static int minTextureSize = 64;
-	public static int maxTextureSize = 8192;
+	public static int programResolution = 4096;
+	public static float newResolutionFactor = 1;
 
 	// buttonGroup for the options
 	private ButtonGroup buttonGroup;
@@ -109,8 +110,8 @@ public class MainWindow extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				// Open a file chooser dialog
 				JFileChooser fileChooser = new JFileChooser();
-				// Limit file chooser to PNG images only
-				FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG Images", "png");
+				// Limit file chooser to PNG and JPG images only
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Image Files", "png", "jpg");
 				fileChooser.setFileFilter(filter);
 
 				// Set the current directory to the last used directory (if available)
@@ -180,11 +181,19 @@ public class MainWindow extends JFrame {
 					}
 
 					lastUsedDirectory3D = selectedFile.getParent();
-					System.out.println(objFileContent);
+					// System.out.println(objFileContent);
 
 					// Calculate the surface area
-					surfaceArea = ObjSurfaceAreaCalculator.calculateSurfaceArea(selectedFile);
-					System.out.println("Surface Area: " + surfaceArea);
+					try {
+						surfaceArea = ObjSurfaceAreaCalculator.calculateSurfaceArea(selectedFile);
+					} catch (FileNotFoundException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+					// System.out.println("Surface Area: " + surfaceArea);
 
 					// Update the Button name to more easily display what file was picked
 					import3DButton.setText("<html>Imported 3D Model: <br>" + selectedFile.getName()
@@ -198,62 +207,84 @@ public class MainWindow extends JFrame {
 		optimize2DButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				newImageResolutionX = imageResolutionX;
-				newImageResolutionY = imageResolutionY;
+				newImageResolutionX = 4096;
+				newImageResolutionY = 4096;
+				
 
 				if (cameraDistance <= 5) {
 					// Linear downscaling, fast
 					for (int i = 0; i <= cameraDistance; i++) {
-						newImageResolutionX = (int) (newImageResolutionX / 1.5);
-						newImageResolutionY = (int) (newImageResolutionY / 1.5);
-						System.out.println(newImageResolutionX);
-						System.out.println(newImageResolutionY);
+						newImageResolutionX = (int) (newImageResolutionX / 1.25);
+						newImageResolutionY = (int) (newImageResolutionY / 1.25);
+						// System.out.println(newImageResolutionX);
+						// System.out.println(newImageResolutionY);
 					}
 
 				}
-				if (cameraDistance > 5 && cameraDistance < 20) {
+				if (cameraDistance > 5 && cameraDistance <= 20) {
 					// Linear downscaling, slow
-					for (int i = 0; i <= cameraDistance; i++) {
+					for (int i = -1; i <= cameraDistance; i++) {
 						newImageResolutionX = (int) (newImageResolutionX / 1.2);
 						newImageResolutionY = (int) (newImageResolutionY / 1.2);
-						System.out.println(newImageResolutionX);
-						System.out.println(newImageResolutionY);
+						// System.out.println(newImageResolutionX);
+						// System.out.println(newImageResolutionY);
 					}
 				}
 				if (cameraDistance > 20) {
 					// Linear downscaling, the slowest
-					for (int i = 0; i <= cameraDistance; i++) {
+					for (int i = -7; i <= cameraDistance; i++) {
 						newImageResolutionX = (int) (newImageResolutionX / 1.1);
 						newImageResolutionY = (int) (newImageResolutionY / 1.1);
-						System.out.println(newImageResolutionX);
-						System.out.println(newImageResolutionY);
+						// System.out.println(newImageResolutionX);
+						// System.out.println(newImageResolutionY);
+					}
+					if (cameraDistance > 35) {
+						for (int i = -7; i < cameraDistance; i++) {
+							newImageResolutionX = (int) (newImageResolutionX / 1.04);
+							newImageResolutionX += 6;
+							newImageResolutionY = (int) (newImageResolutionY / 1.04);
+							newImageResolutionY += 6;
+						}
 					}
 				}
 				if (newImageResolutionX < 32 || newImageResolutionY < 32) {
-					//Increment by one in case the previous divisions lower the number to 0
+					// Increment by one in case the previous divisions lower the number to 0
 					newImageResolutionX += 1;
 					newImageResolutionY += 1;
 					while (newImageResolutionX < 32 || newImageResolutionY < 32) {
 						newImageResolutionX *= 2;
 						newImageResolutionY *= 2;
 					}
-					System.out.println(newImageResolutionX);
-					System.out.println(newImageResolutionY);
+					// System.out.println(newImageResolutionX);
+					// System.out.println(newImageResolutionY);
 				}
 
 				// The +1 helps resolve texture sizes for singular flat planes and objects
-				// smaller than 1m squared
-				newImageResolutionX = (int) (newImageResolutionX * (surfaceArea + 1));
-				newImageResolutionY = (int) (newImageResolutionY * (surfaceArea + 1));
-				System.out.println(newImageResolutionX);
-				System.out.println(newImageResolutionY);
+				// For models smaller than 1m squared
+				if (surfaceArea > 1) {
+					newImageResolutionX = (int) (newImageResolutionX * (surfaceArea));
+					newImageResolutionY = (int) (newImageResolutionY * (surfaceArea));
+				} else {
+					newImageResolutionX = (int) (newImageResolutionX * (surfaceArea + 1));
+					newImageResolutionY = (int) (newImageResolutionY * (surfaceArea + 1));
+				}
+
+				// System.out.println(newImageResolutionX);
+				// System.out.println(newImageResolutionY);
 
 				// Only check of 1 variable is enough as we scale both of them equally.
+				if (newImageResolutionX > 4096) {
+					newImageResolutionX = 4096;
+					newImageResolutionY = 4096;
+				}
 				if (newImageResolutionX > imageResolutionX) {
 					newImageResolutionX = imageResolutionX;
 					newImageResolutionY = imageResolutionY;
 				}
+
 				export2DButton.setEnabled(true);
+				
+				
 
 				optimize2DButton
 						.setText("<html>New Resolution: <br>" + newImageResolutionX + " x " + newImageResolutionY);
@@ -340,7 +371,7 @@ public class MainWindow extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
-	//Other methods
+	// Other methods
 	private void openOptionsDialog() {
 		// Create a new JDialog for the options
 		JDialog optionsDialog = new JDialog(this, "Camera Options", true); // 'this' refers to the MainWindow as the
@@ -556,46 +587,26 @@ public class MainWindow extends JFrame {
 
 			}
 			if (selectedButton.getText().contains("3rd Person")) {
-				cameraDistance = 3;
+				cameraDistance = 5;
 				optionString = "3rd Person";
 				optionsButton.setText("Camera Option: " + optionString);
 			}
 			if (selectedButton.getText().contains("ARPG")) {
-				cameraDistance = 30;
+				cameraDistance = 15;
 				optionString = "ARPG";
 				optionsButton.setText("Camera Option: " + optionString);
 			}
 			if (selectedButton.getText().contains("RTS")) {
-				cameraDistance = 52;
+				cameraDistance = 40;
 				optionString = "RTS/TBS";
 				optionsButton.setText("Camera Option: " + optionString);
 			}
 			if (selectedButton.getText().contains("Custom")) {
-				cameraDistance = CameraDistanceInput.getCameraDistance();
+					cameraDistance = CameraDistanceInput.getCameraDistance(cameraDistance);
+				
 				optionString = "Custom Camera Distance";
-
-				int counterThatHolds = 0;
-				while (counterThatHolds == 0) {
-					// Check if the cameraDistance is valid (greater than zero) and use it as needed
-					if (cameraDistance > 0) {
-						// Do something with the cameraDistance
-						System.out.println("Camera distance entered: " + cameraDistance + " meters");
-
-					} else {
-						// User entered an invalid value or canceled the input
-						System.out.println("Invalid camera distance entered or user canceled the input.");
-					}
-					counterThatHolds++;
-
 					optionsButton.setText("Camera Option: " + optionString + " (" + cameraDistance + " meters)");
-					try {
-						Thread.sleep(500);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
 				}
-
 			}
 			// Check to enable the Optimize Texture button
 			if (selectedImageFile != null && objFileContent != null && cameraDistance != 0) {
@@ -603,7 +614,7 @@ public class MainWindow extends JFrame {
 			}
 		}
 
-	}
+
 
 	public JButton getSelectedButton() {
 		return selectedButton;
