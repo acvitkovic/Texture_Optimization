@@ -581,13 +581,13 @@ public class MainWindow extends JFrame {
 		if (selectedButton != null) {
 			selectedButton.setBackground(Color.YELLOW);
 			if (selectedButton.getText().contains("1st Person")) {
-				cameraDistance = 1;
+				cameraDistance = 4;
 				optionString = "1st Person";
 				optionsButton.setText("Camera Option: " + optionString);
 
 			}
 			if (selectedButton.getText().contains("3rd Person")) {
-				cameraDistance = 5;
+				cameraDistance = 8;
 				optionString = "3rd Person";
 				optionsButton.setText("Camera Option: " + optionString);
 			}
