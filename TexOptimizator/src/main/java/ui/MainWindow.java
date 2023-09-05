@@ -223,27 +223,29 @@ public class MainWindow extends JFrame {
 				}
 				if (cameraDistance > 5 && cameraDistance <= 20) {
 					// Linear downscaling, slow
-					for (int i = 0; i <= cameraDistance; i++) {
-						newImageResolutionX = (int) (newImageResolutionX / 1.22);
-						newImageResolutionY = (int) (newImageResolutionY / 1.22);
+					for (int i = 0; i <= cameraDistance + 4; i++) {
+						newImageResolutionX = (int) (newImageResolutionX / 1.15);
+						newImageResolutionY = (int) (newImageResolutionY / 1.15);
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
 				}
 				if (cameraDistance > 20) {
 					// Linear downscaling, the slowest
-					for (int i = 0; i <= cameraDistance; i++) {
-						newImageResolutionX = (int) (newImageResolutionX / 1.12);
-						newImageResolutionY = (int) (newImageResolutionY / 1.12);
+					for (int i = 0; i <= cameraDistance + 25; i++) {
+						newImageResolutionX = (int) (newImageResolutionX / 1.1);
+						newImageResolutionX += 7;
+						newImageResolutionY = (int) (newImageResolutionY / 1.1);
+						newImageResolutionY += 7;
 						// System.out.println(newImageResolutionX);
 						// System.out.println(newImageResolutionY);
 					}
 					if (cameraDistance > 35) {
-						for (int i = 0; i < cameraDistance; i++) {
-							newImageResolutionX = (int) (newImageResolutionX / 1.04);
-							newImageResolutionX += 6;
-							newImageResolutionY = (int) (newImageResolutionY / 1.04);
-							newImageResolutionY += 6;
+						for (int i = 0; i < cameraDistance + 26; i++) {
+							newImageResolutionX = (int) (newImageResolutionX / 1.05);
+							newImageResolutionX += 5;
+							newImageResolutionY = (int) (newImageResolutionY / 1.05);
+							newImageResolutionY += 5;
 						}
 					}
 				}
